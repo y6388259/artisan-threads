@@ -10,13 +10,13 @@ const Contact = () => {
         <div className="section-gold-divider mb-6" />
 
         <div className="space-y-4">
-          <a href="https://wa.me/98171038750" target="_blank" rel="noopener noreferrer" className="card-warm p-4 flex items-center gap-4">
+          <a href="https://wa.me/919817103875" target="_blank" rel="noopener noreferrer" className="card-warm p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-full bg-whatsapp text-whatsapp-foreground flex items-center justify-center">
               <MessageCircle className="w-6 h-6" />
             </div>
             <div>
               <p className="font-semibold text-foreground">WhatsApp</p>
-              <p className="text-sm text-muted-foreground">+91 98765 43210</p>
+              <p className="text-sm text-muted-foreground">+91 98171 03875</p>
             </div>
           </a>
 
