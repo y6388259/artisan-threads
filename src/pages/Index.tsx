@@ -183,6 +183,66 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Trust Stats */}
+<div className="px-4 py-6 bg-amber-50">
+  <div className="grid grid-cols-3 gap-3">
+    {[
+      { number: '500+', label: 'Happy Customers', icon: '😊' },
+      { number: '50+', label: 'Skilled Artisans', icon: '🧵' },
+      { number: '10+', label: 'Cities Covered', icon: '📍' },
+    ].map((stat) => (
+      <div key={stat.label} className="text-center bg-white rounded-xl p-3 shadow-sm">
+        <div className="text-2xl mb-1">{stat.icon}</div>
+        <div className="text-xl font-bold text-orange-600">{stat.number}</div>
+        <div className="text-xs text-gray-500">{stat.label}</div>
+      </div>
+    ))}
+  </div>
+</div>
+
+{/* How It Works */}
+<div className="px-4 py-6">
+  <h2 className="text-lg font-bold text-center mb-4">How It Works</h2>
+  <div className="space-y-4">
+    {[
+      { step: '1', icon: '🔍', title: 'Find Your Artisan', desc: 'Browse skilled artisans by category, city or embroidery style' },
+      { step: '2', icon: '💬', title: 'Connect on WhatsApp', desc: 'Chat directly with artisan. Share design ideas, get quotes instantly' },
+      { step: '3', icon: '👗', title: 'Receive Your Creation', desc: 'Get your custom handmade clothing delivered to your door' },
+    ].map((item) => (
+      <div key={item.step} className="flex items-start gap-3 bg-white rounded-xl p-3 shadow-sm">
+        <div className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+          {item.step}
+        </div>
+        <div>
+          <div className="font-semibold text-sm">{item.icon} {item.title}</div>
+          <div className="text-xs text-gray-500 mt-1">{item.desc}</div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+{/* Trust Badges */}
+<div className="px-4 py-4 bg-white">
+  <div className="grid grid-cols-2 gap-2">
+    {['✓ 100% Handmade','✓ Direct WhatsApp Orders','✓ Real Verified Artisans','✓ Free to Browse'].map((badge) => (
+      <div key={badge} className="flex items-center gap-2 text-xs text-gray-600 bg-gray-50 rounded-lg p-2 border">
+        {badge}
+      </div>
+    ))}
+  </div>
+</div>
+
+{/* Instagram CTA */}
+<div className="mx-4 my-4 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl p-5 text-white text-center">
+  <div className="text-lg font-bold">Follow Our Journey</div>
+  <div className="text-sm opacity-90 mt-1">@EmbroideryVerse on Instagram</div>
+  <div className="text-xs opacity-75 mt-1 mb-3">Real artisan stories, behind the scenes and customer transformations</div>
+  <a href="https://instagram.com/EmbroideryVerse" target="_blank" rel="noopener noreferrer"
+    className="inline-block bg-white text-pink-600 text-sm font-semibold px-4 py-2 rounded-full">
+    Follow on Instagram →
+  </a>
+</div>
       <Footer />
     </Layout>
   );
