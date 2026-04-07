@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import ArtisanCard from "@/components/ArtisanCard";
 import Footer from "@/components/Footer";

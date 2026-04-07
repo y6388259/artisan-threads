@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import Layout from "@/components/Layout";
 import ArtisanCard from "@/components/ArtisanCard";
