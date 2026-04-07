@@ -136,8 +136,10 @@ const SearchPage = () => {
         )}
 
         {!loading && hasSearched && results.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No artisans found for your search. Try different keywords.</p>
+          <div className="text-center py-16">
+            <div className="text-5xl mb-4">😔</div>
+            <p className="text-lg font-medium text-foreground mb-2">No artisans found</p>
+            <p className="text-sm text-muted-foreground">Try different keywords or browse categories instead.</p>
           </div>
         )}
       </div>

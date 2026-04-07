@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import ArtisanCard from "@/components/ArtisanCard";
 import Footer from "@/components/Footer";
@@ -124,8 +125,13 @@ const BrowsePage = () => {
         )}
 
         {!loading && results.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No artisans found in this category yet.</p>
+          <div className="text-center py-16">
+            <div className="text-5xl mb-4">🪡</div>
+            <p className="text-lg font-medium text-foreground mb-2">No artisans here yet</p>
+            <p className="text-sm text-muted-foreground mb-4">This category is waiting for talented artisans.</p>
+            <Link to="/register-artisan" className="btn-primary inline-block text-sm px-6 py-2">
+              Register an Artisan
+            </Link>
           </div>
         )}
       </div>
