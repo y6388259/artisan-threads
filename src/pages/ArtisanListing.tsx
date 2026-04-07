@@ -96,8 +96,13 @@ const ArtisanListing = () => {
         </div>
 
         {filtered.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No artisans found. Try a different search.</p>
+          <div className="text-center py-16">
+            <div className="text-5xl mb-4">🧵</div>
+            <p className="text-lg font-medium text-foreground mb-2">No artisans yet!</p>
+            <p className="text-sm text-muted-foreground mb-4">Be the first to join our community.</p>
+            <Link to="/register-artisan" className="btn-primary inline-block text-sm px-6 py-2">
+              Register Now
+            </Link>
           </div>
         )}
       </div>

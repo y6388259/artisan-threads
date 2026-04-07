@@ -115,9 +115,18 @@ setUploading(false);
 
   return (
     <Layout>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-accent to-primary/20 py-8 px-6 text-center">
+        <h1 className="font-heading text-2xl md:text-3xl font-bold text-foreground mb-2">Join EmbroideryVerse Family 🧵</h1>
+        <p className="text-sm text-muted-foreground mb-4">Free to join. Share your craft with India.</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <span className="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full">✓ Free Profile</span>
+          <span className="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full">✓ WhatsApp Orders</span>
+          <span className="bg-green-100 text-green-800 text-xs font-medium px-3 py-1 rounded-full">✓ Instagram Promo</span>
+        </div>
+      </section>
+
       <div className="px-4 py-6 max-w-lg mx-auto">
-        <h1 className="font-heading text-2xl font-bold text-foreground text-center">Join EmbroideryVerse 🧵</h1>
-        <p className="text-sm text-muted-foreground text-center mb-6">Share your skill with all of India</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
