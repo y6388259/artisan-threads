@@ -45,7 +45,7 @@ export const products: Product[] = [
     artisanState: "Rajasthan",
     artisanSkill: "Master Tailor",
     artisanExperience: 22,
-    artisanWhatsapp: "98171038751",
+    artisanWhatsapp: "919876543211",
     rating: 4.9,
   },
   {
@@ -72,7 +72,7 @@ export const products: Product[] = [
     artisanState: "Uttar Pradesh",
     artisanSkill: "Chikankari Specialist",
     artisanExperience: 18,
-    artisanWhatsapp: "98171038750",
+    artisanWhatsapp: "919876543210",
     rating: 4.8,
   },
   {
@@ -99,7 +99,7 @@ export const products: Product[] = [
     artisanState: "Rajasthan",
     artisanSkill: "Master Tailor",
     artisanExperience: 22,
-    artisanWhatsapp: "98171038751",
+    artisanWhatsapp: "919876543211",
     rating: 4.9,
   },
   // ===== MEN'S SHERWANI =====
@@ -154,7 +154,7 @@ export const products: Product[] = [
     artisanState: "Rajasthan",
     artisanSkill: "Master Tailor",
     artisanExperience: 22,
-    artisanWhatsapp: "98171038751",
+    artisanWhatsapp: "919876543211",
     rating: 4.8,
   },
   // ===== MEN'S NEHRU JACKET =====
@@ -182,7 +182,7 @@ export const products: Product[] = [
     artisanState: "Jammu & Kashmir",
     artisanSkill: "Kashmiri Embroidery",
     artisanExperience: 25,
-    artisanWhatsapp: "98171038755",
+    artisanWhatsapp: "919876543215",
     rating: 4.8,
   },
   // ===== WOMEN'S LEHENGA =====
@@ -210,7 +210,7 @@ export const products: Product[] = [
     artisanState: "Telangana",
     artisanSkill: "Zardozi Artist",
     artisanExperience: 15,
-    artisanWhatsapp: "98171038752",
+    artisanWhatsapp: "919876543212",
     rating: 4.7,
   },
   {
@@ -237,7 +237,7 @@ export const products: Product[] = [
     artisanState: "Gujarat",
     artisanSkill: "Kutch Mirror Work",
     artisanExperience: 16,
-    artisanWhatsapp: "98171038756",
+    artisanWhatsapp: "919876543216",
     rating: 4.5,
   },
   // ===== WOMEN'S SALWAR KAMEEZ =====
@@ -265,7 +265,7 @@ export const products: Product[] = [
     artisanState: "Uttar Pradesh",
     artisanSkill: "Chikankari Specialist",
     artisanExperience: 18,
-    artisanWhatsapp: "98171038750",
+    artisanWhatsapp: "919876543210",
     rating: 4.8,
   },
   {
@@ -292,7 +292,7 @@ export const products: Product[] = [
     artisanState: "Punjab",
     artisanSkill: "Phulkari Expert",
     artisanExperience: 12,
-    artisanWhatsapp: "98171038753",
+    artisanWhatsapp: "919876543213",
     rating: 4.6,
   },
   // ===== WOMEN'S SAREE =====
@@ -347,7 +347,7 @@ export const products: Product[] = [
     artisanState: "Gujarat",
     artisanSkill: "Bandhani Artist",
     artisanExperience: 19,
-    artisanWhatsapp: "98171038757",
+    artisanWhatsapp: "919876543217",
     rating: 4.7,
   },
   // ===== WOMEN'S KURTI =====
@@ -375,7 +375,7 @@ export const products: Product[] = [
     artisanState: "Uttar Pradesh",
     artisanSkill: "Chikankari Specialist",
     artisanExperience: 18,
-    artisanWhatsapp: "98171038750",
+    artisanWhatsapp: "919876543210",
     rating: 4.8,
   },
   // ===== WOMEN'S DUPATTA =====
@@ -403,7 +403,7 @@ export const products: Product[] = [
     artisanState: "Punjab",
     artisanSkill: "Phulkari Expert",
     artisanExperience: 12,
-    artisanWhatsapp: "98171038753",
+    artisanWhatsapp: "919876543213",
     rating: 4.6,
   },
   // ===== KIDS =====
@@ -431,7 +431,7 @@ export const products: Product[] = [
     artisanState: "Uttar Pradesh",
     artisanSkill: "Kids Wear Tailor",
     artisanExperience: 10,
-    artisanWhatsapp: "98171038759",
+    artisanWhatsapp: "919876543219",
     rating: 4.6,
   },
   {
@@ -458,7 +458,7 @@ export const products: Product[] = [
     artisanState: "Gujarat",
     artisanSkill: "Kutch Mirror Work",
     artisanExperience: 16,
-    artisanWhatsapp: "98171038756",
+    artisanWhatsapp: "919876543216",
     rating: 4.5,
   },
   // ===== FESTIVAL =====
@@ -486,7 +486,7 @@ export const products: Product[] = [
     artisanState: "Tamil Nadu",
     artisanSkill: "Kanjivaram Specialist",
     artisanExperience: 30,
-    artisanWhatsapp: "98171038758",
+    artisanWhatsapp: "919876543218",
     rating: 5.0,
   },
   {
@@ -540,7 +540,7 @@ export const products: Product[] = [
     artisanState: "Gujarat",
     artisanSkill: "Kutch Mirror Work",
     artisanExperience: 16,
-    artisanWhatsapp: "98171038756",
+    artisanWhatsapp: "919876543216",
     rating: 4.5,
   },
   // ===== EMBROIDERY =====
@@ -568,7 +568,7 @@ export const products: Product[] = [
     artisanState: "Jammu & Kashmir",
     artisanSkill: "Kashmiri Embroidery",
     artisanExperience: 25,
-    artisanWhatsapp: "98171038755",
+    artisanWhatsapp: "919876543215",
     rating: 4.8,
   },
   {
@@ -595,7 +595,7 @@ export const products: Product[] = [
     artisanState: "Uttar Pradesh",
     artisanSkill: "Chikankari Specialist",
     artisanExperience: 18,
-    artisanWhatsapp: "98171038750",
+    artisanWhatsapp: "919876543210",
     rating: 4.8,
   },
   {
@@ -622,7 +622,7 @@ export const products: Product[] = [
     artisanState: "Telangana",
     artisanSkill: "Zardozi Artist",
     artisanExperience: 15,
-    artisanWhatsapp: "98171038752",
+    artisanWhatsapp: "919876543212",
     rating: 4.7,
   },
   {
@@ -676,7 +676,7 @@ export const products: Product[] = [
     artisanState: "Punjab",
     artisanSkill: "Phulkari Expert",
     artisanExperience: 12,
-    artisanWhatsapp: "98171038753",
+    artisanWhatsapp: "919876543213",
     rating: 4.6,
   },
   {
@@ -703,7 +703,7 @@ export const products: Product[] = [
     artisanState: "Gujarat",
     artisanSkill: "Kutch Mirror Work",
     artisanExperience: 16,
-    artisanWhatsapp: "98171038756",
+    artisanWhatsapp: "919876543216",
     rating: 4.5,
   },
 ];

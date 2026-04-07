@@ -125,7 +125,7 @@ const CategoryPage = () => {
         <p className="font-heading font-bold mb-1">Can't find what you want?</p>
         <p className="text-sm opacity-90 mb-3">Tell us on WhatsApp and we'll connect you with the right artisan</p>
         <a
-          href="https://wa.me/98171038750?text=Hi! I'm looking for a specific item on EmbroideryVerse."
+          href="https://wa.me/919876543210?text=Hi! I'm looking for a specific item on EmbroideryVerse."
           target="_blank"
           rel="noopener noreferrer"
           className="btn-whatsapp inline-flex text-sm"
