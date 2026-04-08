@@ -44,6 +44,7 @@ const App = () => (
             <Route path="/browse" element={<BrowsePage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/admin-panel" element={<AdminPanel />} />
+            <Route path="/artisan-dashboard" element={<ArtisanDashboard />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="*" element={<NotFound />} />
