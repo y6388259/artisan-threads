@@ -159,15 +159,21 @@ const ArtisanDetailPage = () => {
         )}
       </div>
 
-      {/* Sticky WhatsApp CTA */}
-      <div className="fixed bottom-16 left-0 right-0 px-4 pb-3 pt-2 bg-background/95 backdrop-blur-sm border-t border-border z-40">
+      {/* Sticky CTA */}
+      <div className="fixed bottom-16 left-0 right-0 px-4 pb-3 pt-2 bg-background/95 backdrop-blur-sm border-t border-border z-40 space-y-2">
+        <button
+          onClick={() => navigate(`/order/${id}`)}
+          className="btn-primary w-full justify-center text-base py-3 flex items-center gap-2 rounded-xl"
+        >
+          🧵 Place Order
+        </button>
         <a
           href={waUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-whatsapp w-full justify-center text-base py-3"
+          className="text-xs text-center block text-muted-foreground hover:text-primary transition-colors"
         >
-          <MessageCircle className="w-5 h-5" /> Connect on WhatsApp 💬
+          <MessageCircle className="w-3 h-3 inline mr-1" />Quick WhatsApp
         </a>
       </div>
 

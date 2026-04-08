@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import ArtisanListing from "./pages/ArtisanListing";
 import ArtisanProfile from "./pages/ArtisanProfile";
 import ArtisanDetailPage from "./pages/ArtisanDetailPage";
+import OrderPage from "./pages/OrderPage";
 import RegisterArtisan from "./pages/RegisterArtisan";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
