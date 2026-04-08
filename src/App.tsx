@@ -17,6 +17,7 @@ import SearchPage from "./pages/SearchPage";
 import BrowsePage from "./pages/BrowsePage";
 import ProfilePage from "./pages/ProfilePage";
 import AdminPanel from "./pages/AdminPanel";
+import ArtisanDashboard from "./pages/ArtisanDashboard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
