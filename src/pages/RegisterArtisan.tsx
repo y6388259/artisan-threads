@@ -14,6 +14,8 @@ const RegisterArtisan = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const [customSkill, setCustomSkill] = useState("");
+
   const [form, setForm] = useState({
     name: "",
     whatsapp_number: "",
@@ -80,7 +82,7 @@ setUploading(false);
       whatsapp_number: `+91${form.whatsapp_number}`,
       city: form.city.split(",")[0]?.trim() || form.city,
       state: form.city.split(",")[1]?.trim() || "",
-      skill_type: form.skill_type,
+      skill_type: form.skill_type === "Other" ? customSkill : form.skill_type,
       years_experience: parseInt(form.years_experience),
       price_min: parseInt(form.price_min),
       price_max: parseInt(form.price_max),
@@ -155,6 +157,15 @@ setUploading(false);
               <option>Bridal</option>
               <option>Other</option>
             </select>
+            {form.skill_type === "Other" && (
+              <input
+                value={customSkill}
+                onChange={e => setCustomSkill(e.target.value)}
+                className="input-warm mt-2"
+                placeholder="Describe your skill (e.g. Hand block printing, Batik work)"
+                required
+              />
+            )}
           </div>
           <div>
             <label className="text-sm font-medium text-foreground block mb-1">Years of Experience</label>
