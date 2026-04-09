@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, ArrowRight, Check, MessageCircle } from "lucide-react";
 import Layout from "@/components/Layout";
 import Footer from "@/components/Footer";
@@ -14,13 +14,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const ITEM_TYPES = [
   "Kurta", "Salwar Kameez", "Lehenga", "Saree Blouse",
-  "Sherwani", "Kurta Pajama", "Custom (describe below)"
+  "Sherwani", "Kurta Pajama", "Kids Wear", "Other"
 ];
+const FABRIC_OPTIONS = ["Cotton", "Silk", "Georgette", "Chiffon", "Linen", "I need suggestions", "Other"];
 const STITCHING_TYPES = ["Regular", "Premium", "Handwork"];
-const EMBROIDERY_TYPES = ["Phulkari", "Kantha", "Zardozi", "Chikankari", "None", "Other"];
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Custom measurements"];
-const FIT_TYPES = ["Regular", "Slim", "Loose/Comfort"];
-const TIMELINES = ["1 week", "2 weeks", "1 month", "Flexible"];
+const EMBROIDERY_TYPES = ["Phulkari", "Kantha", "Zardozi", "Chikankari", "Mirror Work", "No Embroidery", "Other"];
+const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Custom Measurements"];
+const FIT_TYPES = ["Regular Fit", "Slim Fit", "Loose/Comfort Fit"];
+const TIMELINES = ["1 Week", "2 Weeks", "1 Month", "Flexible"];
 
 const OrderPage = () => {
   const { artisanId } = useParams();
@@ -30,35 +31,55 @@ const OrderPage = () => {
   const [artisan, setArtisan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Step 2 fields
+  // Step 1
   const [itemType, setItemType] = useState("");
+  const [customItem, setCustomItem] = useState("");
   const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("");
+  const [customFabric, setCustomFabric] = useState("");
   const [stitchingType, setStitchingType] = useState("Regular");
-  const [embroideryType, setEmbroideryType] = useState("None");
+  const [embroideryType, setEmbroideryType] = useState("No Embroidery");
+  const [customEmbroidery, setCustomEmbroidery] = useState("");
 
-  // Step 3 fields
+  // Step 2
   const [size, setSize] = useState("M");
   const [chest, setChest] = useState("");
   const [waist, setWaist] = useState("");
   const [hip, setHip] = useState("");
   const [length, setLength] = useState("");
   const [sleeveLength, setSleeveLength] = useState("");
-  const [fitPreference, setFitPreference] = useState("Regular");
+  const [fitPreference, setFitPreference] = useState("Regular Fit");
   const [fitNotes, setFitNotes] = useState("");
 
-  // Step 4 fields
+  // Step 3
   const [fullName, setFullName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
-  const [timeline, setTimeline] = useState("2 weeks");
+  const [deliveryState, setDeliveryState] = useState("");
+  const [timeline, setTimeline] = useState("2 Weeks");
   const [orderValue, setOrderValue] = useState(1000);
+
+  // Step 4
   const [specialNote, setSpecialNote] = useState("");
 
   const shippingFee = 100;
-  const platformFee = 0;
-  const total = orderValue + shippingFee + platformFee;
+
+  const platformFee = useMemo(() => {
+    const totalOrders = artisan?.total_orders ?? 0;
+    if (totalOrders <= 2) return 0;
+    if (totalOrders <= 5) return Math.round(orderValue * 0.05);
+    return Math.round(orderValue * 0.10);
+  }, [artisan?.total_orders, orderValue]);
+
+  const total = orderValue + platformFee + shippingFee;
+
+  const platformFeeLabel = useMemo(() => {
+    const totalOrders = artisan?.total_orders ?? 0;
+    if (totalOrders <= 2) return "₹0 🎉 (First 2 orders free)";
+    if (totalOrders <= 5) return `5% = ₹${platformFee.toLocaleString("en-IN")}`;
+    return `10% = ₹${platformFee.toLocaleString("en-IN")}`;
+  }, [artisan?.total_orders, platformFee]);
 
   useEffect(() => {
     const fetchArtisan = async () => {
@@ -73,50 +94,56 @@ const OrderPage = () => {
     fetchArtisan();
   }, [artisanId]);
 
+  const resolvedItem = itemType === "Other" ? customItem : itemType;
+  const resolvedFabric = fabric === "Other" ? customFabric : fabric;
+  const resolvedEmbroidery = embroideryType === "Other" ? customEmbroidery : embroideryType;
+
   const validateStep = (s: number): boolean => {
-    if (s === 2) {
+    if (s === 1) {
       if (!itemType) { toast({ title: "Please select an item type", variant: "destructive" }); return false; }
+      if (itemType === "Other" && !customItem.trim()) { toast({ title: "Please describe the item", variant: "destructive" }); return false; }
       if (!description.trim()) { toast({ title: "Please describe your requirement", variant: "destructive" }); return false; }
     }
-    if (s === 3) {
-      if (size === "Custom measurements" && !chest && !waist) {
+    if (s === 2) {
+      if (size === "Custom Measurements" && !chest && !waist) {
         toast({ title: "Please enter at least chest or waist measurement", variant: "destructive" }); return false;
       }
     }
-    if (s === 4) {
+    if (s === 3) {
       if (!fullName.trim()) { toast({ title: "Please enter your name", variant: "destructive" }); return false; }
       if (!/^\d{10}$/.test(whatsapp)) { toast({ title: "Enter a valid 10-digit WhatsApp number", variant: "destructive" }); return false; }
       if (!city.trim()) { toast({ title: "Please enter your city", variant: "destructive" }); return false; }
+      if (!deliveryState.trim()) { toast({ title: "Please enter your state", variant: "destructive" }); return false; }
       if (orderValue < 1000) { toast({ title: "Minimum order value is ₹1,000", variant: "destructive" }); return false; }
     }
     return true;
   };
 
   const nextStep = () => {
-    if (validateStep(step)) setStep(s => Math.min(s + 1, 5));
+    if (validateStep(step)) setStep(s => Math.min(s + 1, 4));
   };
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
 
+  const measurements = size === "Custom Measurements"
+    ? `Chest: ${chest}, Waist: ${waist}, Hip: ${hip}, Length: ${length}, Sleeve: ${sleeveLength}`
+    : size;
+
   const handleConfirm = async () => {
     const cleanNum = artisan?.whatsapp_number?.replace(/\D/g, "").replace(/^91/, "") || "";
-    const measurements = size === "Custom measurements"
-      ? `Chest: ${chest}, Waist: ${waist}, Hip: ${hip}, Length: ${length}, Sleeve: ${sleeveLength}`
-      : size;
 
-    // Save to Supabase
-    await supabase.from("orders").insert({
+    const { data, error } = await supabase.from("orders").insert({
       artisan_id: artisanId,
       customer_name: fullName,
       customer_whatsapp: whatsapp,
       customer_email: email || null,
       delivery_city: city,
-      item_type: itemType,
+      item_type: resolvedItem,
       description,
-      fabric_preference: fabric || null,
+      fabric_preference: resolvedFabric || null,
       stitching_type: stitchingType,
-      embroidery_type: embroideryType,
+      embroidery_type: resolvedEmbroidery,
       size,
-      measurements: size === "Custom measurements" ? measurements : null,
+      measurements: size === "Custom Measurements" ? measurements : null,
       fit_preference: fitPreference,
       fit_notes: fitNotes || null,
       timeline,
@@ -126,26 +153,39 @@ const OrderPage = () => {
       total,
       special_note: specialNote || null,
       status: "pending",
-    });
+    }).select("id").single();
 
-    // Open WhatsApp
-    const msg = `🧵 New Order from EmbroideryVerse
+    if (error) {
+      toast({ title: "Failed to place order. Please try again.", variant: "destructive" });
+      return;
+    }
 
-Customer: ${fullName}
-Item: ${itemType}
-Description: ${description}
-Size: ${measurements}
-Timeline: ${timeline}
-Order Value: ₹${orderValue}
-City: ${city}
-Note: ${specialNote || "—"}
+    const msg = `🧵 *New Order — EmbroideryVerse*
 
-Please confirm if you can take this order.`;
+*Customer:* ${fullName}
+*Item:* ${resolvedItem}
+*Description:* ${description}
+*Size:* ${measurements}
+*Fit:* ${fitPreference}
+*Embroidery:* ${resolvedEmbroidery}
+*Timeline:* ${timeline}
+*City:* ${city}
+*Order Value:* ₹${orderValue.toLocaleString("en-IN")}
+*Platform Fee:* ₹${platformFee.toLocaleString("en-IN")}
+*Shipping:* ₹100
+*Total:* ₹${total.toLocaleString("en-IN")}
+*Special Note:* ${specialNote || "—"}
+
+Please confirm if you can accept this order.`;
 
     window.open(`https://wa.me/91${cleanNum}?text=${encodeURIComponent(msg)}`, "_blank");
 
     toast({ title: "🎉 Order sent!", description: "The artisan will confirm on WhatsApp." });
-    navigate("/artisans");
+    if (data?.id) {
+      navigate(`/order-status/${data.id}`);
+    } else {
+      navigate("/artisans");
+    }
   };
 
   if (loading) {
@@ -170,33 +210,15 @@ Please confirm if you can take this order.`;
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-xs text-muted-foreground mb-1">Step {step} of 5</p>
-            <Progress value={step * 20} className="h-2" />
+            <p className="text-xs text-muted-foreground mb-1">Step {step} of 4</p>
+            <Progress value={step * 25} className="h-2" />
           </div>
         </div>
 
-        {/* Step 1: Welcome */}
+        {/* STEP 1 — What do you need? */}
         {step === 1 && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="bg-accent/50 rounded-2xl p-6 text-center space-y-3">
-              <p className="text-4xl">🧵</p>
-              <h2 className="font-heading text-lg font-bold text-foreground">Ready to order from {artisan.name}?</h2>
-              <p className="text-sm text-muted-foreground">Tell us what you want made, your size, and we'll connect you directly with the artisan on WhatsApp.</p>
-              <div className="flex flex-wrap gap-2 justify-center pt-2">
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">{artisan.skill_type}</span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">₹{artisan.price_min}–₹{artisan.price_max}</span>
-              </div>
-            </div>
-            <Button onClick={nextStep} className="w-full" size="lg">
-              Start Order <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        )}
-
-        {/* Step 2: What do you want? */}
-        {step === 2 && (
           <div className="space-y-5 animate-fade-in">
-            <h2 className="font-heading text-lg font-bold text-foreground">What do you want made?</h2>
+            <h2 className="font-heading text-lg font-bold text-foreground">What do you need?</h2>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Item Type *</Label>
@@ -208,20 +230,48 @@ Please confirm if you can take this order.`;
                   </button>
                 ))}
               </div>
+              {itemType === "Other" && (
+                <Input value={customItem} onChange={e => setCustomItem(e.target.value)} placeholder="Describe the item" className="mt-2" required />
+              )}
             </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Describe your requirement *</Label>
-              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="E.g., I want a pink georgette kurta with golden embroidery on the neckline..." rows={4} />
+              <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe exactly what you want made..." rows={4} />
             </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Fabric preference (optional)</Label>
-              <Input value={fabric} onChange={e => setFabric(e.target.value)} placeholder="Cotton, Silk, Georgette, Chiffon..." />
+              <div className="flex flex-wrap gap-2">
+                {FABRIC_OPTIONS.map(f => (
+                  <button key={f} onClick={() => setFabric(f)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${fabric === f ? "border-primary bg-primary/10 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+              {fabric === "Other" && (
+                <Input value={customFabric} onChange={e => setCustomFabric(e.target.value)} placeholder="Specify fabric" className="mt-2" />
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Stitching type</Label>
+              <Label className="text-sm font-medium">Embroidery type</Label>
+              <div className="flex flex-wrap gap-2">
+                {EMBROIDERY_TYPES.map(t => (
+                  <button key={t} onClick={() => setEmbroideryType(t)}
+                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${embroideryType === t ? "border-primary bg-primary/10 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+              {embroideryType === "Other" && (
+                <Input value={customEmbroidery} onChange={e => setCustomEmbroidery(e.target.value)} placeholder="Specify embroidery type" className="mt-2" />
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Stitching quality</Label>
               <RadioGroup value={stitchingType} onValueChange={setStitchingType} className="flex gap-3">
                 {STITCHING_TYPES.map(t => (
                   <div key={t} className="flex items-center gap-1.5">
@@ -232,32 +282,19 @@ Please confirm if you can take this order.`;
               </RadioGroup>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Special embroidery</Label>
-              <div className="flex flex-wrap gap-2">
-                {EMBROIDERY_TYPES.map(t => (
-                  <button key={t} onClick={() => setEmbroideryType(t)}
-                    className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${embroideryType === t ? "border-primary bg-primary/10 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/50"}`}>
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={prevStep} className="flex-1"><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button onClick={nextStep} className="flex-1">Next <ArrowRight className="w-4 h-4 ml-1" /></Button>
-            </div>
+            <Button onClick={nextStep} className="w-full" size="lg">
+              Next — Size & Fit <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
         )}
 
-        {/* Step 3: Size & Fit */}
-        {step === 3 && (
+        {/* STEP 2 — Size & Fit */}
+        {step === 2 && (
           <div className="space-y-5 animate-fade-in">
             <h2 className="font-heading text-lg font-bold text-foreground">Size & Fit</h2>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Size</Label>
+              <Label className="text-sm font-medium">Standard Size</Label>
               <div className="flex flex-wrap gap-2">
                 {SIZES.map(s => (
                   <button key={s} onClick={() => setSize(s)}
@@ -268,7 +305,7 @@ Please confirm if you can take this order.`;
               </div>
             </div>
 
-            {size === "Custom measurements" && (
+            {size === "Custom Measurements" && (
               <div className="space-y-3 bg-accent/30 rounded-xl p-4">
                 <p className="text-sm font-medium text-foreground">Enter measurements (in inches)</p>
                 <div className="grid grid-cols-2 gap-3">
@@ -283,7 +320,7 @@ Please confirm if you can take this order.`;
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Fit preference</Label>
-              <RadioGroup value={fitPreference} onValueChange={setFitPreference} className="flex gap-3">
+              <RadioGroup value={fitPreference} onValueChange={setFitPreference} className="flex flex-wrap gap-3">
                 {FIT_TYPES.map(f => (
                   <div key={f} className="flex items-center gap-1.5">
                     <RadioGroupItem value={f} id={`fit-${f}`} />
@@ -294,21 +331,21 @@ Please confirm if you can take this order.`;
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Specific fit notes (optional)</Label>
+              <Label className="text-sm font-medium">Additional fit notes (optional)</Label>
               <Input value={fitNotes} onChange={e => setFitNotes(e.target.value)} placeholder="E.g., slightly loose around arms" />
             </div>
 
             <div className="flex gap-3">
               <Button variant="outline" onClick={prevStep} className="flex-1"><ArrowLeft className="w-4 h-4 mr-1" /> Back</Button>
-              <Button onClick={nextStep} className="flex-1">Next <ArrowRight className="w-4 h-4 ml-1" /></Button>
+              <Button onClick={nextStep} className="flex-1">Next — Your Details <ArrowRight className="w-4 h-4 ml-1" /></Button>
             </div>
           </div>
         )}
 
-        {/* Step 4: Your Details */}
-        {step === 4 && (
+        {/* STEP 3 — Your Details & Timeline */}
+        {step === 3 && (
           <div className="space-y-5 animate-fade-in">
-            <h2 className="font-heading text-lg font-bold text-foreground">Your Details</h2>
+            <h2 className="font-heading text-lg font-bold text-foreground">Your Details & Timeline</h2>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Full Name *</Label>
@@ -325,13 +362,19 @@ Please confirm if you can take this order.`;
               <Input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com" type="email" />
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Delivery City *</Label>
-              <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Mumbai, Delhi, Jaipur..." />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Delivery City *</Label>
+                <Input value={city} onChange={e => setCity(e.target.value)} placeholder="Mumbai" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Delivery State *</Label>
+                <Input value={deliveryState} onChange={e => setDeliveryState(e.target.value)} placeholder="Maharashtra" />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Estimated timeline</Label>
+              <Label className="text-sm font-medium">Timeline needed</Label>
               <div className="flex flex-wrap gap-2">
                 {TIMELINES.map(t => (
                   <button key={t} onClick={() => setTimeline(t)}
@@ -343,20 +386,18 @@ Please confirm if you can take this order.`;
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Order Value (min ₹1,000) *</Label>
+              <Label className="text-sm font-medium">Order Value *</Label>
               <Input type="number" min={1000} value={orderValue} onChange={e => setOrderValue(Number(e.target.value))} inputMode="numeric" />
+              <p className="text-xs text-muted-foreground">Minimum order value is ₹1,000</p>
             </div>
 
+            {/* Fee Breakdown */}
             <div className="bg-accent/30 rounded-xl p-4 space-y-2">
+              <p className="text-sm font-semibold text-foreground mb-2">Fee Breakdown</p>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Order Value</span><span className="text-foreground">₹{orderValue.toLocaleString("en-IN")}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Platform Fee</span><span className={`text-foreground ${platformFee === 0 ? "text-green-600" : ""}`}>{platformFeeLabel}</span></div>
               <div className="flex justify-between text-sm"><span className="text-muted-foreground">Shipping Fee</span><span className="text-foreground">₹{shippingFee}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-muted-foreground">Platform Fee</span><span className="text-foreground text-green-600">₹0 (Free!)</span></div>
               <div className="border-t border-border pt-2 flex justify-between text-sm font-bold"><span>Total</span><span>₹{total.toLocaleString("en-IN")}</span></div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Anything else you want the artisan to know?</Label>
-              <Textarea value={specialNote} onChange={e => setSpecialNote(e.target.value)} placeholder="Reference images, colour codes, special instructions..." rows={3} />
             </div>
 
             <div className="flex gap-3">
@@ -366,29 +407,46 @@ Please confirm if you can take this order.`;
           </div>
         )}
 
-        {/* Step 5: Review & Confirm */}
-        {step === 5 && (
+        {/* STEP 4 — Review & Special Note */}
+        {step === 4 && (
           <div className="space-y-5 animate-fade-in">
-            <h2 className="font-heading text-lg font-bold text-foreground">Review & Confirm</h2>
+            <h2 className="font-heading text-lg font-bold text-foreground">Review & Special Note</h2>
 
             <div className="bg-accent/30 rounded-xl p-4 space-y-3 text-sm">
-              <div><span className="text-muted-foreground">Item:</span> <span className="text-foreground font-medium">{itemType}</span></div>
+              <div><span className="text-muted-foreground">Item:</span> <span className="text-foreground font-medium">{resolvedItem}</span></div>
               <div><span className="text-muted-foreground">Description:</span> <span className="text-foreground">{description}</span></div>
-              {fabric && <div><span className="text-muted-foreground">Fabric:</span> <span className="text-foreground">{fabric}</span></div>}
+              {resolvedFabric && <div><span className="text-muted-foreground">Fabric:</span> <span className="text-foreground">{resolvedFabric}</span></div>}
               <div><span className="text-muted-foreground">Stitching:</span> <span className="text-foreground">{stitchingType}</span></div>
-              <div><span className="text-muted-foreground">Embroidery:</span> <span className="text-foreground">{embroideryType}</span></div>
+              <div><span className="text-muted-foreground">Embroidery:</span> <span className="text-foreground">{resolvedEmbroidery}</span></div>
               <div><span className="text-muted-foreground">Size:</span> <span className="text-foreground">{size}</span></div>
-              {size === "Custom measurements" && <div><span className="text-muted-foreground">Measurements:</span> <span className="text-foreground">Chest: {chest}, Waist: {waist}, Hip: {hip}, Length: {length}, Sleeve: {sleeveLength}</span></div>}
+              {size === "Custom Measurements" && <div><span className="text-muted-foreground">Measurements:</span> <span className="text-foreground">{measurements}</span></div>}
               <div><span className="text-muted-foreground">Fit:</span> <span className="text-foreground">{fitPreference}</span></div>
               <hr className="border-border" />
               <div><span className="text-muted-foreground">Name:</span> <span className="text-foreground font-medium">{fullName}</span></div>
               <div><span className="text-muted-foreground">WhatsApp:</span> <span className="text-foreground">{whatsapp}</span></div>
               {email && <div><span className="text-muted-foreground">Email:</span> <span className="text-foreground">{email}</span></div>}
-              <div><span className="text-muted-foreground">City:</span> <span className="text-foreground">{city}</span></div>
+              <div><span className="text-muted-foreground">City:</span> <span className="text-foreground">{city}, {deliveryState}</span></div>
               <div><span className="text-muted-foreground">Timeline:</span> <span className="text-foreground">{timeline}</span></div>
               <hr className="border-border" />
-              <div className="flex justify-between font-bold"><span>Total</span><span>₹{total.toLocaleString("en-IN")}</span></div>
-              {specialNote && <div><span className="text-muted-foreground">Note:</span> <span className="text-foreground">{specialNote}</span></div>}
+              <div className="flex justify-between"><span className="text-muted-foreground">Order Value</span><span>₹{orderValue.toLocaleString("en-IN")}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Platform Fee</span><span>{platformFeeLabel}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>₹100</span></div>
+              <div className="flex justify-between font-bold border-t border-border pt-2"><span>Total</span><span>₹{total.toLocaleString("en-IN")}</span></div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Any special instruction for the artisan?</Label>
+              <Textarea
+                value={specialNote}
+                onChange={e => { if (e.target.value.length <= 300) setSpecialNote(e.target.value); }}
+                placeholder="e.g. I prefer darker shade of blue, please add pocket on left side..."
+                rows={3}
+                maxLength={300}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{specialNote.length}/300</span>
+                <span>This is your ONE chance to add special instructions. Choose your words carefully.</span>
+              </div>
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm space-y-2 text-amber-900">
@@ -401,7 +459,7 @@ Please confirm if you can take this order.`;
             <div className="flex gap-3">
               <Button variant="outline" onClick={prevStep} className="flex-1"><ArrowLeft className="w-4 h-4 mr-1" /> Edit Order</Button>
               <Button onClick={handleConfirm} className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-                <MessageCircle className="w-4 h-4 mr-1" /> Confirm & Send
+                Confirm Order & Proceed <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </div>
           </div>
