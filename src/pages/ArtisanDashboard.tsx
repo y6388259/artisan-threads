@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ShoppingBag, CheckCircle2, Star, Gauge, ArrowLeft,
-  MessageCircle, Upload, AlertTriangle, Edit2, Save, X, LogOut
+  MessageCircle, Upload, AlertTriangle, Edit2, Save, X, LogOut,
+  Clock, Camera, Ban
 } from "lucide-react";
 import Layout from "@/components/Layout";
 import Footer from "@/components/Footer";
@@ -34,7 +35,6 @@ const ArtisanLogin = ({ onLogin }: { onLogin: (artisan: any) => void }) => {
       .maybeSingle();
 
     if (err || !data) {
-      // Try broader match
       const { data: d2 } = await supabase
         .from("artisans")
         .select("*")
@@ -106,6 +106,19 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
+/* ─── Countdown helper ─── */
+const getHoursSince = (dateStr: string | null): number => {
+  if (!dateStr) return 0;
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60));
+};
+
+const DECLINE_REASONS = [
+  "Too busy currently",
+  "Skill mismatch",
+  "Outside my price range",
+  "Other",
+];
+
 /* ─── Main Dashboard ─── */
 const ArtisanDashboard = () => {
   const [artisan, setArtisan] = useState<any>(null);
@@ -115,6 +128,9 @@ const ArtisanDashboard = () => {
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState<any>({});
   const [tab, setTab] = useState<"orders" | "completed" | "profile">("orders");
+  const [decliningOrderId, setDecliningOrderId] = useState<string | null>(null);
+  const [milestoneOrderId, setMilestoneOrderId] = useState<string | null>(null);
+  const [milestoneText, setMilestoneText] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -147,9 +163,18 @@ const ArtisanDashboard = () => {
     fetchOrders(a.id);
   };
 
+  const refreshArtisan = async () => {
+    if (!artisan) return;
+    const { data } = await supabase.from("artisans").select("*").eq("id", artisan.id).single();
+    if (data) setArtisan(data);
+  };
+
   const updateOrderStatus = async (orderId: string, newStatus: string, extra: Record<string, any> = {}) => {
     await supabase.from("orders").update({ status: newStatus, ...extra }).eq("id", orderId);
-    if (artisan) fetchOrders(artisan.id);
+    if (artisan) {
+      fetchOrders(artisan.id);
+      refreshArtisan();
+    }
     toast({ title: `Order ${newStatus.replace(/_/g, " ")}` });
   };
 
@@ -158,15 +183,40 @@ const ArtisanDashboard = () => {
     window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
-  const handleAccept = (order: any) => {
-    updateOrderStatus(order.id, "accepted");
+  const handleAccept = async (order: any) => {
+    // Update order status + accepted_at
+    await supabase.from("orders").update({
+      status: "accepted",
+      accepted_at: new Date().toISOString(),
+    }).eq("id", order.id);
+
+    // Increment active_orders
+    await supabase.from("artisans").update({
+      active_orders: (artisan.active_orders || 0) + 1,
+    }).eq("id", artisan.id);
+
+    fetchOrders(artisan.id);
+    refreshArtisan();
+    toast({ title: "Order accepted ✅" });
+
     sendWhatsApp(
       order.customer_whatsapp,
-      `Hi ${order.customer_name}! Your order on EmbroideryVerse has been accepted. I will share work-start video within 24 hours. — ${artisan.name}`
+      `Namaste ${order.customer_name}! 🙏 Your order has been accepted on EmbroideryVerse. I will share a work-start video within 24 hours. — ${artisan.name}`
     );
   };
 
-  const handleVideoUpload = async (orderId: string, file: File, field: "work_start_video_url" | "completion_video_url", nextStatus: string) => {
+  const handleDecline = async (orderId: string, reason: string) => {
+    await supabase.from("orders").update({
+      status: "declined",
+      decline_reason: reason,
+    }).eq("id", orderId);
+
+    fetchOrders(artisan.id);
+    setDecliningOrderId(null);
+    toast({ title: "Order declined" });
+  };
+
+  const handleVideoUpload = async (orderId: string, file: File, field: "work_start_video_url" | "completion_video_url", nextStatus: string, order: any) => {
     if (file.size > 50 * 1024 * 1024) {
       toast({ title: "File too large. Max 50MB", variant: "destructive" });
       return;
@@ -182,9 +232,49 @@ const ArtisanDashboard = () => {
     }
 
     const { data: urlData } = supabase.storage.from("order-videos").getPublicUrl(path);
-    await updateOrderStatus(orderId, nextStatus, { [field]: urlData.publicUrl });
+
+    if (field === "work_start_video_url") {
+      await updateOrderStatus(orderId, nextStatus, { [field]: urlData.publicUrl });
+      sendWhatsApp(
+        order.customer_whatsapp,
+        `Hi ${order.customer_name}! Work on your order has started. You can track progress at: haath-se-kraft.lovable.app/order-status/${orderId}`
+      );
+    } else {
+      // Completion
+      await supabase.from("orders").update({
+        status: "completed",
+        completion_video_url: urlData.publicUrl,
+      }).eq("id", orderId);
+
+      // Decrement active_orders, increment total_orders
+      await supabase.from("artisans").update({
+        active_orders: Math.max((artisan.active_orders || 1) - 1, 0),
+        total_orders: (artisan.total_orders || 0) + 1,
+      }).eq("id", artisan.id);
+
+      fetchOrders(artisan.id);
+      refreshArtisan();
+      toast({ title: "Order completed! 🎉" });
+
+      sendWhatsApp(
+        order.customer_whatsapp,
+        `Your order is complete! 🎉 Here's your completion video. We'll arrange delivery soon.\nOrder status: haath-se-kraft.lovable.app/order-status/${orderId}`
+      );
+    }
+
     setLoading(false);
-    toast({ title: "Video uploaded!" });
+  };
+
+  const handleMilestone = async (orderId: string) => {
+    if (!milestoneText.trim()) return;
+    await supabase.from("order_milestones").insert({
+      order_id: orderId,
+      artisan_id: artisan.id,
+      message: milestoneText,
+    });
+    setMilestoneText("");
+    setMilestoneOrderId(null);
+    toast({ title: "Progress update shared! 📸" });
   };
 
   const handleSaveProfile = async () => {
@@ -202,8 +292,10 @@ const ArtisanDashboard = () => {
 
   if (!artisan) return <ArtisanLogin onLogin={handleLogin} />;
 
-  const activeCount = orders.filter(o => activeStatuses.includes(o.status)).length;
+  const activeCount = orders.filter(o => ["accepted", "work_started", "in_progress"].includes(o.status)).length;
+  const pendingCount = orders.filter(o => o.status === "pending").length;
   const atCapacity = activeCount >= orderCap;
+  const almostAtCapacity = activeCount === orderCap - 1;
 
   return (
     <Layout>
@@ -220,11 +312,17 @@ const ArtisanDashboard = () => {
           <Button variant="ghost" size="icon" onClick={logout}><LogOut className="w-5 h-5" /></Button>
         </div>
 
-        {/* Capacity warning */}
+        {/* Capacity warnings */}
         {atCapacity && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-300 rounded-xl flex items-start gap-2 text-sm text-red-800">
+            <Ban className="w-5 h-5 shrink-0 mt-0.5" />
+            <p>🚫 <strong>Order Cap Reached</strong> — You cannot accept new orders. Complete existing orders to accept more.</p>
+          </div>
+        )}
+        {!atCapacity && almostAtCapacity && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2 text-sm text-amber-800">
             <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-            <p>⚠️ You have reached your order capacity. New orders cannot be accepted until you complete existing ones.</p>
+            <p>⚠️ Almost at capacity. <strong>1 slot remaining.</strong></p>
           </div>
         )}
 
@@ -237,7 +335,7 @@ const ArtisanDashboard = () => {
           </div>
           <div className="bg-accent/40 rounded-xl p-4 text-center">
             <CheckCircle2 className="w-5 h-5 mx-auto text-green-600 mb-1" />
-            <p className="text-2xl font-bold text-foreground">{completedOrders.length}</p>
+            <p className="text-2xl font-bold text-foreground">{artisan.total_orders || 0}</p>
             <p className="text-xs text-muted-foreground">Completed</p>
           </div>
           <div className="bg-accent/40 rounded-xl p-4 text-center">
@@ -261,7 +359,7 @@ const ArtisanDashboard = () => {
               onClick={() => setTab(t)}
               className={`flex-1 text-sm py-2 rounded-lg font-medium transition-colors ${tab === t ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}
             >
-              {t === "orders" ? `Active (${activeCount})` : t === "completed" ? `Done (${completedOrders.length})` : "Profile"}
+              {t === "orders" ? `Active (${orders.length})` : t === "completed" ? `Done (${completedOrders.length})` : "Profile"}
             </button>
           ))}
         </div>
@@ -275,60 +373,127 @@ const ArtisanDashboard = () => {
                 <p className="text-muted-foreground">No active orders right now</p>
               </div>
             )}
-            {orders.map(order => (
-              <div key={order.id} className="bg-background border border-border rounded-xl p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">{order.customer_name}</p>
-                    <a href={`https://wa.me/91${order.customer_whatsapp?.replace(/\D/g, "").replace(/^91/, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1">
-                      <MessageCircle className="w-3 h-3" /> {order.customer_whatsapp}
-                    </a>
-                  </div>
-                  <StatusBadge status={order.status} />
-                </div>
+            {orders.map(order => {
+              const hoursSinceAccepted = getHoursSince(order.accepted_at);
+              const isOverdue = order.status === "accepted" && hoursSinceAccepted > 24;
+              const isWarning = order.status === "accepted" && hoursSinceAccepted > 12 && hoursSinceAccepted <= 24;
 
-                <div className="text-sm space-y-1">
-                  <p><span className="text-muted-foreground">Item:</span> <span className="text-foreground">{order.item_type}</span></p>
-                  <p className="text-muted-foreground line-clamp-2">{order.description}</p>
-                  <div className="flex gap-4">
-                    <p><span className="text-muted-foreground">Value:</span> <span className="font-medium text-foreground">₹{order.order_value?.toLocaleString("en-IN")}</span></p>
-                    <p><span className="text-muted-foreground">Timeline:</span> <span className="text-foreground">{order.timeline}</span></p>
+              return (
+                <div key={order.id} className={`bg-background border rounded-xl p-4 space-y-3 ${isOverdue ? "border-red-300" : "border-border"}`}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground">{order.customer_name}</p>
+                      <a href={`https://wa.me/91${order.customer_whatsapp?.replace(/\D/g, "").replace(/^91/, "")}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1">
+                        <MessageCircle className="w-3 h-3" /> {order.customer_whatsapp}
+                      </a>
+                    </div>
+                    <StatusBadge status={order.status} />
                   </div>
-                </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-2 pt-1">
-                  {order.status === "pending" && (
-                    <>
-                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleAccept(order)} disabled={atCapacity}>
-                        Accept ✓
-                      </Button>
-                      <Button size="sm" variant="destructive" className="flex-1" onClick={() => updateOrderStatus(order.id, "declined")}>
-                        Decline
-                      </Button>
-                    </>
-                  )}
+                  {/* Structured job card details */}
+                  <div className="text-sm space-y-1 bg-accent/20 rounded-lg p-3">
+                    <p><span className="text-muted-foreground">Item:</span> <span className="text-foreground font-medium">{order.item_type}</span></p>
+                    <p className="text-muted-foreground">{order.description}</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1">
+                      {order.size && <p><span className="text-muted-foreground">Size:</span> <span className="text-foreground">{order.size}</span></p>}
+                      {order.fit_preference && <p><span className="text-muted-foreground">Fit:</span> <span className="text-foreground">{order.fit_preference}</span></p>}
+                      {order.embroidery_type && <p><span className="text-muted-foreground">Embroidery:</span> <span className="text-foreground">{order.embroidery_type}</span></p>}
+                      {order.timeline && <p><span className="text-muted-foreground">Timeline:</span> <span className="text-foreground">{order.timeline}</span></p>}
+                      {order.delivery_city && <p><span className="text-muted-foreground">City:</span> <span className="text-foreground">{order.delivery_city}</span></p>}
+                    </div>
+                    <p className="pt-1"><span className="text-muted-foreground">Value:</span> <span className="font-bold text-foreground">₹{order.order_value?.toLocaleString("en-IN")}</span></p>
+                  </div>
+
+                  {/* Accepted countdown */}
                   {order.status === "accepted" && (
-                    <label className="flex-1">
-                      <input type="file" accept="video/*" className="hidden" disabled={loading}
-                        onChange={e => e.target.files?.[0] && handleVideoUpload(order.id, e.target.files[0], "work_start_video_url", "work_started")} />
-                      <div className="flex items-center justify-center gap-2 text-sm font-medium px-3 py-2 rounded-md bg-purple-600 hover:bg-purple-700 text-white cursor-pointer transition-colors">
-                        <Upload className="w-4 h-4" /> Upload Work-Start Video 📹
-                      </div>
-                    </label>
+                    <div className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg ${isOverdue ? "bg-red-50 text-red-700" : isWarning ? "bg-amber-50 text-amber-700" : "bg-blue-50 text-blue-700"}`}>
+                      <Clock className="w-3.5 h-3.5" />
+                      {isOverdue
+                        ? `⚠️ Overdue! ${hoursSinceAccepted}h since accepted — upload work-start video NOW`
+                        : isWarning
+                          ? `⚠️ ${24 - hoursSinceAccepted}h remaining to upload work-start video`
+                          : `${24 - hoursSinceAccepted}h remaining to upload work-start video`
+                      }
+                    </div>
                   )}
-                  {order.status === "work_started" && (
-                    <label className="flex-1">
-                      <input type="file" accept="video/*" className="hidden" disabled={loading}
-                        onChange={e => e.target.files?.[0] && handleVideoUpload(order.id, e.target.files[0], "completion_video_url", "completed")} />
-                      <div className="flex items-center justify-center gap-2 text-sm font-medium px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white cursor-pointer transition-colors">
-                        <CheckCircle2 className="w-4 h-4" /> Mark Completed ✓
+
+                  {/* Action buttons */}
+                  <div className="space-y-2 pt-1">
+                    {order.status === "pending" && (
+                      <>
+                        {decliningOrderId === order.id ? (
+                          <div className="space-y-2 bg-red-50 rounded-lg p-3">
+                            <p className="text-sm font-medium text-red-800">Select a reason:</p>
+                            {DECLINE_REASONS.map(reason => (
+                              <button key={reason} onClick={() => handleDecline(order.id, reason)}
+                                className="block w-full text-left text-sm px-3 py-2 rounded-lg border border-red-200 bg-background text-foreground hover:bg-red-50 transition-colors">
+                                {reason}
+                              </button>
+                            ))}
+                            <Button variant="ghost" size="sm" onClick={() => setDecliningOrderId(null)} className="w-full">Cancel</Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleAccept(order)} disabled={atCapacity}>
+                              ✅ Accept Order
+                            </Button>
+                            <Button size="sm" variant="outline" className="flex-1 border-red-300 text-red-600 hover:bg-red-50" onClick={() => setDecliningOrderId(order.id)}>
+                              ❌ Decline
+                            </Button>
+                          </div>
+                        )}
+                        {atCapacity && (
+                          <p className="text-xs text-red-600 text-center">Cannot accept — order cap reached</p>
+                        )}
+                      </>
+                    )}
+
+                    {order.status === "accepted" && (
+                      <label className="block">
+                        <input type="file" accept="video/*" className="hidden" disabled={loading}
+                          onChange={e => e.target.files?.[0] && handleVideoUpload(order.id, e.target.files[0], "work_start_video_url", "work_started", order)} />
+                        <div className="flex items-center justify-center gap-2 text-sm font-medium px-3 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white cursor-pointer transition-colors">
+                          <Upload className="w-4 h-4" /> 📹 Upload Work-Start Video (Required)
+                        </div>
+                      </label>
+                    )}
+
+                    {order.status === "work_started" && (
+                      <div className="space-y-2">
+                        {/* Milestone update */}
+                        {milestoneOrderId === order.id ? (
+                          <div className="space-y-2 bg-accent/30 rounded-lg p-3">
+                            <Textarea
+                              value={milestoneText}
+                              onChange={e => setMilestoneText(e.target.value)}
+                              placeholder="Share a progress update..."
+                              rows={2}
+                            />
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => handleMilestone(order.id)} className="flex-1">Send Update</Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setMilestoneOrderId(null); setMilestoneText(""); }}>Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="outline" className="w-full" onClick={() => setMilestoneOrderId(order.id)}>
+                            <Camera className="w-4 h-4 mr-1" /> 📸 Share Progress Update
+                          </Button>
+                        )}
+
+                        {/* Completion */}
+                        <label className="block">
+                          <input type="file" accept="video/*" className="hidden" disabled={loading}
+                            onChange={e => e.target.files?.[0] && handleVideoUpload(order.id, e.target.files[0], "completion_video_url", "completed", order)} />
+                          <div className="flex items-center justify-center gap-2 text-sm font-medium px-3 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 text-white cursor-pointer transition-colors">
+                            <CheckCircle2 className="w-4 h-4" /> ✅ Mark as Completed (Upload Video)
+                          </div>
+                        </label>
                       </div>
-                    </label>
-                  )}
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -351,9 +516,14 @@ const ArtisanDashboard = () => {
                   <StatusBadge status={order.status} />
                 </div>
                 <p className="text-sm font-medium text-foreground">₹{order.order_value?.toLocaleString("en-IN")}</p>
-                {order.completion_video_url && (
-                  <a href={order.completion_video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">View completion video</a>
-                )}
+                <div className="flex gap-2">
+                  {order.work_start_video_url && (
+                    <a href={order.work_start_video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">Work-start video</a>
+                  )}
+                  {order.completion_video_url && (
+                    <a href={order.completion_video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">Completion video</a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
